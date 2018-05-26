@@ -7,7 +7,7 @@ END
 
 # Create installation log file
 
-mkdir ~/ldap_install.log 
+touch ~/ldap_install.log 
 logfile='~/ldap_install.log'
 
 # install the required packages
