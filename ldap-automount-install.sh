@@ -60,7 +60,7 @@ openssl req \
 -nodes \
 -out /etc/openldap/certs/cert.pem \
 -keyout /etc/openldap/certs/priv.pem \
--days 365 >> $logfile 2>&1
+-days 365
 
 # Secure the content of the /etc/openldap/certs directory
 ldapcert='/etc/openldap/certs'
