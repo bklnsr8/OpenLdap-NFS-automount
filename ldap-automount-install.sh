@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Author: Reginald Sands
-<!-- 
+: <<'END' 
 Purpose: To install the openldap and nfs-automount
 as the server side for the RHCSA ldap and autofs client configuration objective
--->
+END
 
 # install the required packages
 yum install \
@@ -14,7 +14,9 @@ migrationtools \
 nfs-utils \
 nss_pam_ldap \
 autofs
+<< 'END'
 
+END
 # create a root passwd
 echo -n "Enter ldap root passwd: "
 read passwd
@@ -48,4 +50,3 @@ chown ldap:ldap /var/lib/ldap/*
 systemctl enable slapd
 systemctl start slapd
 
-# To start the configuration of the LDAP server, add the cosine & nis LDAP schemas:
