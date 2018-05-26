@@ -89,12 +89,25 @@ END
 # add the cosine & nis LDAP schemas:
 
 #* add the cosine schemas
-ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f /etc/openldap/schema/cosine.ldif
+ldapadd \
+-Y EXTERNAL \
+-H ldapi:/// \
+-D "cn=config" \
+-f /etc/openldap/schema/cosine.ldif
 
 #* add the nis schemas
-ldapadd -Y EXTERNAL -H ldapi:/// -D "cn=config" -f /etc/openldap/schema/nis.ldif
+ldapadd \
+-Y EXTERNAL \
+-H ldapi:/// \
+-D "cn=config" \
+-f /etc/openldap/schema/nis.ldif
 
 # create the /etc/openldap/changes.ldif
+
+touch /etc/openldap/changes.ldif
+
+ed -s /etc/openldap/changes.ldif << 'EOF'
+$a
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcSuffix
@@ -129,11 +142,22 @@ dn: olcDatabase={1}monitor,cn=config
 changetype: modify
 replace: olcAccess
 olcAccess: {0}to * by dn.base="gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth" read by dn.base="cn=Manager,dc=example,dc=com" read by * none
+.
+w
+EOF
 
 # Send the new configuration to the slapd server:
-ldapmodify -Y EXTERNAL -H ldapi:/// -f /etc/openldap/changes.ldif 
+
+ldapmodify \
+-Y EXTERNAL \
+-H ldapi:/// \
+-f /etc/openldap/changes.ldif 
 
 # Create the /etc/openldap/base.ldif
+touch /etc/openldap/base.ldif
+
+ed -s /etc/openldap/base.ldif << 'EOF'
+$a
 dn: dc=example,dc=com
 dc: example
 objectClass: top
@@ -148,9 +172,16 @@ dn: ou=Group,dc=example,dc=com
 ou: Group
 objectClass: top
 objectClass: organizationalUnit
+.
+w
+EOF
 
 # Build the structure of the directory service:
-ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f /etc/openldap/base.ldif
+ldapadd \
+-x \
+-w redhat \
+-D cn=Manager,dc=example,dc=com \
+-f /etc/openldap/base.ldif
 
 # Create a guest user directory
 mkdir /home/guests
@@ -190,14 +221,30 @@ sed -i 's/\$DEFAULT_BASE =.*/\$DEFAULT_BASE = "dc=example,dc=com";/' $migrate_co
 ## Create the current users in the directory service:
 
 # import user accounts
+
+#* create ldap user config file
 grep ":10[0-9][0-9]" /etc/passwd > passwd
-/usr/share/migrationtools/migrate_passwd.pl passwd users.ldif
-ldapadd -x -w $rootpw -D cn=Manager,dc=example,dc=com -f users.ldif
+/usr/share/migrationtools/migrate_passwd.pl /etc/passwd > users.ldif
+
+#* add users.ldif to LDAP
+ldapadd \
+-x \
+-w $rootpw \
+-D cn=Manager,dc=example,dc=com \
+-f users.ldif
 
 # import group accounts
+
+#* create ldap group config file
 grep ":10[0-9][0-9]" /etc/group > group
-/usr/share/migrationtools/migrate_group.pl group groups.ldif
-ldapadd -x -w redhat -D cn=Manager,dc=example,dc=com -f groups.ldif
+/usr/share/migrationtools/migrate_group.pl /etc/group > groups.ldif
+
+#* add group.ldif to LDAP
+ldapadd \
+-x \
+-w $rootpw \
+-D cn=Manager,dc=example,dc=com \
+-f groups.ldif
 
 <<'END'
 Configure the LDAP server to use autofs
@@ -209,6 +256,10 @@ END
 ## Configure the LDAP server to use autofs
 
 # Create Auto master ldap
+touch /etc/openldap/auto.master.ldif
+
+ed -s /etc/openldap/auto.master.ldif << 'EOF'
+$a
 dn: ou=auto.master,dc=lgcpu1
 objectClass: top
 objectClass: automountMap
@@ -223,14 +274,23 @@ dn: cn=/share,ou=auto.master,dc=lgcpu1
 objectClass: automount
 automountInformation: ldap:ou=auto.misc, dc=lgcpu1
 cn: /share
-
+.
+w
+EOF
 # Create Auto Home in ldap
 
 # Create misc in ldap
+touch /etc/openldap/auto.misc.ldif
+
+ed -s /etc/openldap/auto.misc.ldif << 'EOF'
+$a
 dn: ou=auto.misc,dc=lgcpu1
 objectClass: top
 objectClass: automountMap
 ou: auto.misc
+.
+w
+EOF
 
 <<'END'
 Configure NFS Server
@@ -245,6 +305,10 @@ END
 
 # Start and enable nfs service
 service nfs start
+
+# Create home directory on NFS server
+cp /etc/skel/.[a-z]* /home/guests/
+chown -R ldap:ldap /home/guests/
 
 <<'END'
 Firewall Configuration
@@ -262,4 +326,3 @@ firewall-cmd --permanent --add-service=nfs
 
 # reload firewall
 firewall-cmd --reload
-
