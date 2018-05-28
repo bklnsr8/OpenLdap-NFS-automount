@@ -328,7 +328,7 @@ END
 echo '/home/guests 192.168.10.1/24(rw)' > /etc/exports >> $logfile 2>&1
 
 # Start and enable nfs service
-service nfs start > $logfile 2>&1
+service nfs start >> $logfile 2>&1
 
 <<'END'
 Firewall Configuration
