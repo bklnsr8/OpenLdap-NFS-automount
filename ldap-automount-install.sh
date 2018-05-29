@@ -17,7 +17,7 @@ openldap-clients \
 openldap-servers \
 migrationtools \
 nfs-utils \
-nss_pam_ldap \
+nss_pam_ldapd \
 autofs #>> $logfile 2>&1
 
 <<'END'
