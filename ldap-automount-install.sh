@@ -63,7 +63,7 @@ openssl req \
 -days 365
 
 # Secure the content of the /etc/openldap/certs directory
-ldapcert='/etc/openldap/certs'
+ldapcert=/etc/openldap/certs
 chown ldap:ldap $ldapcert/* #>> $logfile 2>&1
 chmod 600 $ldapcert/priv.pem #>> $logfile 2>&1
 
