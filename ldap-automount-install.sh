@@ -7,8 +7,8 @@ END
 
 # Create installation log file
 
-touch ~/ldap_install.log 
-logfile=~/ldap_install.log
+#touch ~/ldap_install.log 
+#logfile=~/ldap_install.log
 
 # install the required packages
 yum install -y \
@@ -18,7 +18,7 @@ openldap-servers \
 migrationtools \
 nfs-utils \
 nss_pam_ldap \
-autofs >> $logfile 2>&1
+autofs #>> $logfile 2>&1
 
 <<'END'
 LDAP server installation procedure:
@@ -49,7 +49,7 @@ if ($passwd <= 3);
   else
     rootpw = $(slappasswd -s $passwd -n)
     echo 'rootpw:' $rootpw > /etc/openldap/passwd
-fi >> $logfile 2>&1
+fi #>> $logfile 2>&1
 
 ## Generate a x509 certificate
 
@@ -64,21 +64,21 @@ openssl req \
 
 # Secure the content of the /etc/openldap/certs directory
 ldapcert='/etc/openldap/certs'
-chown ldap:ldap $ldapcert/* >> $logfile 2>&1
-chmod 600 $ldapcert/priv.pem >> $logfile 2>&1
+chown ldap:ldap $ldapcert/* #>> $logfile 2>&1
+chmod 600 $ldapcert/priv.pem #>> $logfile 2>&1
 
 # Prepare the LDAP database
-cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG >> $logfile 2>&1
+cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG #>> $logfile 2>&1
 
 # Generate database files
-slaptest >> $logfile 2>&1
+slaptest #>> $logfile 2>&1
 
 # Change LDAP database ownership:
-chown ldap:ldap /var/lib/ldap/* >> $logfile 2>&1
+chown ldap:ldap /var/lib/ldap/* #>> $logfile 2>&1
 
 # enable and State slapd 
-systemctl enable slapd >> $logfile 2>&1
-systemctl start slapd >> $logfile 2>&1
+systemctl enable slapd #>> $logfile 2>&1
+systemctl start slapd #>> $logfile 2>&1
 
 <<'END'
 LDAP Server configuration:
@@ -98,18 +98,18 @@ ldapadd \
 -Y EXTERNAL \
 -H ldapi:/// \
 -D "cn=config" \
--f /etc/openldap/schema/cosine.ldif >> $logfile 2>&1
+-f /etc/openldap/schema/cosine.ldif #>> $logfile 2>&1
 
 #* add the nis schemas
 ldapadd \
 -Y EXTERNAL \
 -H ldapi:/// \
 -D "cn=config" \
--f /etc/openldap/schema/nis.ldif >> $logfile 2>&1
+-f /etc/openldap/schema/nis.ldif #>> $logfile 2>&1
 
 # create the /etc/openldap/changes.ldif
 
-touch /etc/openldap/changes.ldif >> logfile 2>&1
+touch /etc/openldap/changes.ldif #>> logfile 2>&1
 
 ed -s /etc/openldap/changes.ldif << 'EOF'
 $a
@@ -156,10 +156,10 @@ EOF
 ldapmodify \
 -Y EXTERNAL \
 -H ldapi:/// \
--f /etc/openldap/changes.ldif >> $logfile 2>&1
+-f /etc/openldap/changes.ldif #>> $logfile 2>&1
 
 # Create the /etc/openldap/base.ldif
-touch /etc/openldap/base.ldif >> $logfile 2>&1
+touch /etc/openldap/base.ldif #>> $logfile 2>&1
 
 ed -s /etc/openldap/base.ldif << 'EOF'
 $a
@@ -186,14 +186,14 @@ ldapadd \
 -x \
 -w redhat \
 -D cn=Manager,dc=bkln,dc=com \
--f /etc/openldap/base.ldif >> $logfile 2>&1
+-f /etc/openldap/base.ldif #>> $logfile 2>&1
 
 # Create a guest user directory
-mkdir /home/guests >> $logfile 2>&1
+mkdir /home/guests #>> $logfile 2>&1
 
 # Create home directory on NFS server
-cp /etc/skel/.[a-z]* /home/guests/ >> $logfile 2>&1
-chown -R ldap:ldap /home/guests/ >> $logfile 2>&1
+cp /etc/skel/.[a-z]* /home/guests/ #>> $logfile 2>&1
+chown -R ldap:ldap /home/guests/ #>> $logfile 2>&1
 
 <<'END'
 User Account Migration
@@ -209,12 +209,12 @@ END
 ## Create test users
 
 # Create user accounts
-useradd -d /home/guests/ldapuser01 ldapuser01 >> $logfile 2>&1
-useradd -d /home/guests/ldapuser02 ldapuser02 >> $logfile 2>&1
+useradd -d /home/guests/ldapuser01 ldapuser01 #>> $logfile 2>&1
+useradd -d /home/guests/ldapuser02 ldapuser02 #>> $logfile 2>&1
 
 # Create user passwd
-echo 'iq156sr7' | passwd ldapuser01 --stdin >> $logfile 2>&1
-echo 'iq156sr7' | passwd ldapuser02 --stdin >> $logfile 2>&1
+echo 'iq156sr7' | passwd ldapuser01 --stdin #>> $logfile 2>&1
+echo 'iq156sr7' | passwd ldapuser02 --stdin #>> $logfile 2>&1
 
 # Edit the migrate_common.ph file
 
@@ -222,38 +222,38 @@ echo 'iq156sr7' | passwd ldapuser02 --stdin >> $logfile 2>&1
 migrate_common='/usr/share/migrationtools/migrate_common'
 
 #* $DEFAULT_MAIL_DOMAIN = "example.com";
-sed -i 's/$DEFAULT_MAIL_DOMAIN =.*/$DEFAULT_MAIL_DOMAIN = "bkln.com";/' $migrate_common >> $logfile 2>&1
+sed -i 's/$DEFAULT_MAIL_DOMAIN =.*/$DEFAULT_MAIL_DOMAIN = "bkln.com";/' $migrate_common #>> $logfile 2>&1
 
 #* $DEFAULT_BASE = "dc=example,dc=com";
-sed -i 's/\$DEFAULT_BASE =.*/\$DEFAULT_BASE = "dc=example,dc=com";/' $migrate_common >> $logfile 2>&1
+sed -i 's/\$DEFAULT_BASE =.*/\$DEFAULT_BASE = "dc=example,dc=com";/' $migrate_common #>> $logfile 2>&1
 
 ## Create the current users in the directory service:
 
 # import user accounts
 
 #* create ldap user config file
-grep ":10[0-9][0-9]" /etc/passwd > /etc/openldap/localpasswd.txt >> $logfile 2>&1
-/usr/share/migrationtools/migrate_passwd.pl /etc/opendldap/localpasswd.txt > /etc/openldap/users.ldif >> $logfile 2>&1
+grep ":10[0-9][0-9]" /etc/passwd > /etc/openldap/localpasswd.txt #>> $logfile 2>&1
+/usr/share/migrationtools/migrate_passwd.pl /etc/opendldap/localpasswd.txt > /etc/openldap/users.ldif #>> $logfile 2>&1
 
 #* add users.ldif to LDAP
 ldapadd \
 -x \
 -w $rootpw \
 -D cn=Manager,dc=bkln,dc=com \
--f /etc/openldap/users.ldif >> $logfile 2>&1
+-f /etc/openldap/users.ldif #>> $logfile 2>&1
 
 # import group accounts
 
 #* create ldap group config file
-grep ":10[0-9][0-9]" /etc/group > /etc/openldap/localgroups.txt >> $logfile 2>&1
-/usr/share/migrationtools/migrate_group.pl /etc/group > /etc/openldap/groups.ldif >> $logfile 2>&1
+grep ":10[0-9][0-9]" /etc/group > /etc/openldap/localgroups.txt #>> $logfile 2>&1
+/usr/share/migrationtools/migrate_group.pl /etc/group > /etc/openldap/groups.ldif #>> $logfile 2>&1
 
 #* add group.ldif to LDAP
 ldapadd \
 -x \
 -w $rootpw \
 -D cn=Manager,dc=bkln,dc=com \
--f /etc/openldap/groups.ldif >> $logfile 2>&1
+-f /etc/openldap/groups.ldif #>> $logfile 2>&1
 
 <<'END'
 Configure the LDAP server to use autofs
@@ -292,7 +292,7 @@ ldapadd \
 -x \
 -w $rootpw \
 -D cn=Manager,dc=bkln,dc=com \
--f /etc/openldap/auto.master.ldif >> $logfile 2>&1
+-f /etc/openldap/auto.master.ldif #>> $logfile 2>&1
 # Create Auto Home in ldap
 
 # Create misc in ldap
@@ -313,7 +313,7 @@ ldapadd \
 -x \
 -w $rootpw \
 -D cn=Manager,dc=bkln,dc=com \
--f /etc/openldap/auto.misc.ldif >> $logfile 2>&1
+-f /etc/openldap/auto.misc.ldif #>> $logfile 2>&1
 
 <<'END'
 Configure NFS Server
@@ -325,10 +325,10 @@ END
 
 # Edit /etc/exports
 
-echo '/home/guests 192.168.10.1/24(rw)' > /etc/exports >> $logfile 2>&1
+echo '/home/guests 192.168.10.1/24(rw)' > /etc/exports #>> $logfile 2>&1
 
 # Start and enable nfs service
-service nfs start >> $logfile 2>&1
+service nfs start #>> $logfile 2>&1
 
 <<'END'
 Firewall Configuration
@@ -339,10 +339,10 @@ END
 ## Add a ldap service to the firewall
 
 # add ldap serivce
-firewall-cmd --permanent --add-service=ldap >> $logfile 2>&1
+firewall-cmd --permanent --add-service=ldap #>> $logfile 2>&1
 
 # add nfs service
-firewall-cmd --permanent --add-service=nfs >> $logfile 2>&1
+firewall-cmd --permanent --add-service=nfs #>> $logfile 2>&1
 
 # reload firewall
-firewall-cmd --reload >> $logfile 2>&1
+firewall-cmd --reload #>> $logfile 2>&1
