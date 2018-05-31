@@ -17,7 +17,7 @@ openldap-clients \
 openldap-servers \
 migrationtools \
 nfs-utils \
-nss_pam_ldapd \
+nss-pam-ldapd \
 autofs #>> $logfile 2>&1
 
 <<'END'
@@ -98,14 +98,13 @@ ldapadd \
 -Y EXTERNAL \
 -H ldapi:/// \
 -D "cn=config" \
--f /etc/openldap/schema/cosine.ldif #>> $logfile 2>&1
+:wq-f /etc/openldap/schema/cosine.ldif #>> $logfile 2>&1
 
 #* add the nis schemas
 ldapadd \
 -Y EXTERNAL \
 -H ldapi:/// \
--D "cn=config" \
--f /etc/openldap/schema/nis.ldif #>> $logfile 2>&1
+-D "cn=config" -f /etc/openldap/schema/nis.ldif #>> $logfile 2>&1
 
 # create the /etc/openldap/changes.ldif
 
@@ -126,7 +125,7 @@ olcRootDN: cn=Manager,dc=bkln,dc=com
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcRootPW
-olcRootPW: PASSWORD
+olcRootPW: 
 
 dn: cn=config
 changetype: modify
@@ -155,8 +154,7 @@ EOF
 
 ldapmodify \
 -Y EXTERNAL \
--H ldapi:/// \
--f /etc/openldap/changes.ldif #>> $logfile 2>&1
+-H ldapi:/// -f /etc/openldap/changes.ldif #>> $logfile 2>&1
 
 # Create the /etc/openldap/base.ldif
 touch /etc/openldap/base.ldif #>> $logfile 2>&1
