@@ -40,15 +40,15 @@ END
 
 # Ask the user for the password
 echo -n "Enter ldap root passwd: " 
-read passwd 
+read rootpw 
 
 # Check if the user as entered a passwd
-if ($passwd <= 3);
+if ($rootpw <= 3);
   then
     echo "Enter ldap root passwd: "
+    read rootpw
   else
-    rootpw = $(slappasswd -s $passwd -n)
-    echo 'rootpw:' $rootpw > /etc/openldap/passwd
+    slappasswd -s $rootpw-n > /etc/openldap/passwd
 fi #>> $logfile 2>&1
 
 ## Generate a x509 certificate
@@ -63,9 +63,8 @@ openssl req \
 -days 365
 
 # Secure the content of the /etc/openldap/certs directory
-ldapcert=/etc/openldap/certs
-chown ldap:ldap $ldapcert/* #>> $logfile 2>&1
-chmod 600 $ldapcert/priv.pem #>> $logfile 2>&1
+chown root:ldap /etc/openldap/certs/* #>> $logfile 2>&1
+chmod 660 /etc/openldap/certs/priv.pem #>> $logfile 2>&1
 
 # Prepare the LDAP database
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG #>> $logfile 2>&1
@@ -74,7 +73,39 @@ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG #>> $lo
 slaptest #>> $logfile 2>&1
 
 # Change LDAP database ownership:
-chown ldap:ldap /var/lib/ldap/* #>> $logfile 2>&1
+chown root:ldap /var/lib/ldap/* #>> $logfile 2>&1
+chmod 660 /var/lib/ldap/*
+
+# Add slapd.conf
+touch /etc/openldap/slapd.conf
+ed -s /etc/openldap/slapd.conf << 'EOF'
+$a
+include    /etc/openldap/schema/redhat/autofs.schema
+
+\#########################################################
+\# ldbm and/or bdb database definitions
+\#########################################################
+
+database    bdb
+suffix      "dc=bkln,dc=com"
+checkpoint      1024 15
+rootdn      "cn=Manager,dc=bkln,dc=com"
+
+rootpw     $rootpw 
+
+# Access Control
+access to attrs=userPassword
+  by self                               write
+  by anonymous                          auth
+  by dn="cn=manager,dc=bkln,dc=com"  write
+  by *                                  compare
+access to *
+  by self                               write
+  by dn="cn=manager,dc=bkln,dc=com"  write
+  by *                                  read
+.
+w
+EOF
 
 # enable and State slapd 
 systemctl enable slapd #>> $logfile 2>&1
@@ -98,13 +129,14 @@ ldapadd \
 -Y EXTERNAL \
 -H ldapi:/// \
 -D "cn=config" \
-:wq-f /etc/openldap/schema/cosine.ldif #>> $logfile 2>&1
+-f /etc/openldap/schema/cosine.ldif #>> $logfile 2>&1
 
 #* add the nis schemas
 ldapadd \
 -Y EXTERNAL \
 -H ldapi:/// \
--D "cn=config" -f /etc/openldap/schema/nis.ldif #>> $logfile 2>&1
+-D "cn=config" \
+-f /etc/openldap/schema/nis.ldif #>> $logfile 2>&1
 
 # create the /etc/openldap/changes.ldif
 
@@ -125,7 +157,7 @@ olcRootDN: cn=Manager,dc=bkln,dc=com
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcRootPW
-olcRootPW: 
+olcRootPW: $rootpw
 
 dn: cn=config
 changetype: modify
@@ -154,7 +186,8 @@ EOF
 
 ldapmodify \
 -Y EXTERNAL \
--H ldapi:/// -f /etc/openldap/changes.ldif #>> $logfile 2>&1
+-H ldapi:/// \
+-f /etc/openldap/changes.ldif #>> $logfile 2>&1
 
 # Create the /etc/openldap/base.ldif
 touch /etc/openldap/base.ldif #>> $logfile 2>&1
@@ -223,7 +256,7 @@ migrate_common='/usr/share/migrationtools/migrate_common'
 sed -i 's/$DEFAULT_MAIL_DOMAIN =.*/$DEFAULT_MAIL_DOMAIN = "bkln.com";/' $migrate_common #>> $logfile 2>&1
 
 #* $DEFAULT_BASE = "dc=example,dc=com";
-sed -i 's/\$DEFAULT_BASE =.*/\$DEFAULT_BASE = "dc=example,dc=com";/' $migrate_common #>> $logfile 2>&1
+sed -i 's/\$DEFAULT_BASE =.*/\$DEFAULT_BASE = "dc=bkln,dc=com";/' $migrate_common #>> $logfile 2>&1
 
 ## Create the current users in the directory service:
 
