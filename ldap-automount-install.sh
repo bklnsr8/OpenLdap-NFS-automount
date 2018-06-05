@@ -63,8 +63,10 @@ openssl req \
 -days 365
 
 # Secure the content of the /etc/openldap/certs directory
+
 chown root:ldap /etc/openldap/certs/* #>> $logfile 2>&1
-chmod 660 /etc/openldap/certs/priv.pem #>> $logfile 2>&1
+chmod 640 /etc/openldap/certs/priv.pem #>> $logfile 2>&1
+chmod g+x /etc/openldap/certs/priv.pem
 
 # Prepare the LDAP database
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG #>> $logfile 2>&1
@@ -114,6 +116,7 @@ systemctl start slapd #>> $logfile 2>&1
 <<'END'
 LDAP Server configuration:
  - add the cosine & nis LDAP schemas:
+ - ldap cert ownership & permissions
  - create the /etc/openldap/changes.ldif
  - Send the new configuration to the slapd server:
  - Create the /etc/openldap/base.ldif
@@ -137,6 +140,12 @@ ldapadd \
 -H ldapi:/// \
 -D "cn=config" \
 -f /etc/openldap/schema/nis.ldif #>> $logfile 2>&1
+
+# ldap cert ownership & permissions
+
+adduser openldap ssl-cert
+chgrp ssl-cert /etc/ssl/private
+chgrp ssl-cert /etc/ssl/private/ldap
 
 # create the /etc/openldap/changes.ldif
 
