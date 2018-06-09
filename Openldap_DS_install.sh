@@ -102,22 +102,22 @@ dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcSuffix
 olcSuffix: dc=bkln,dc=com
-
+-
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcRootDN
 olcRootDN: cn=Manager,dc=bkln,dc=com
-
+-
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 replace: olcRootPW
 olcRootPW: {SSHA}l8A+0c+lRcymtWuIFbbc3EJ1PRZz9mGg
-
+-
 dn: cn=config
 changetype: modify
 replace: olcLogLevel
 olcLogLevel: -1
-
+-
 dn: olcDatabase={1}monitor,cn=config
 changetype: modify
 replace: olcAccess
@@ -160,12 +160,12 @@ dn: dc=bkln,dc=com
 dc: bkln
 objectClass: top
 objectClass: domain
-
+\n
 dn: ou=People,dc=bkln,dc=com
 ou: People
 objectClass: top
 objectClass: organizationalUnit
-
+\n
 dn: ou=Group,dc=bkln,dc=com
 ou: Group
 objectClass: top
