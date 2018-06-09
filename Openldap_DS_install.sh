@@ -95,7 +95,7 @@ ldapadd \
 
 # Create the /etc/openldap/changes.ldif file
 mkdir /etc/openldap/config
-touch /etc/openldap/config/changes.ldif 
+touch /etc/openldap/config/changes.ldif
 ed -s /etc/openldap/config/changes.ldif << 'EOF'
 $a
 dn: olcDatabase={2}hdb,cn=config
@@ -206,28 +206,29 @@ useradd -d /home/guests/ldapuser02 ldapuser02
 echo 'redhat' | passwd ldapuser02 --stdin
 
 # edit the /usr/share/migrationtools/migrate_common.ph
-cp 
-sed -i -e 's/\$DEFAULT_MAIL_DOMAIN.*;/\$DEFAULT_MAIL_DOMAIN = "bkln.com";/' /usr/share/migrationtools/migrate_common.ph
+cp /usr/share/migrationtools/migrate_common.ph /usr/share/migrationtools/migrate_common.ph.orig
 
-sed -i -e 's/\$DEFAULT_BASE.*;/\$DEFAULT_BASE = "dc=bkln,dc=com";/' /usr/share/migrationtools/migrate_common.ph
+sed -i '0,/^$DEFAULT_MAIL_DOMAIN.*;/s//$DEFAULT_MAIL_DOMAIN = "bkln.com";/' /usr/share/migrationtools/migrate_common.ph
+
+sed -i '0,/^$DEFAULT_BASE.*;/s//$DEFAULT_BASE = "dc=bkln,dc=com";/' /usr/share/migrationtools/migrate_common.ph
 
 # Create the current users in the directory
 
 #* Create users config file
 grep ":10[0-9][0-9]" /etc/passwd > /etc/openldap/passwd
 
-./usr/share/migrationtools/migrate_passwd.pl /etc/openldap/passwd /etc/openldap/config/users.ldif
+perl /usr/share/migrationtools/migrate_passwd.pl /etc/openldap/passwd /etc/openldap/config/users.ldif
 
 ldapadd \
 -x \
 -w redhat \
--D cn=Manager,dc=bkln,dc=com 
--f users.ldif
+-D cn=Manager,dc=bkln,dc=com \
+-f /etc/openldap/config/users.ldif
 
 #* Create groups config file
 grep ":10[0-9][0-9]" /etc/group > /etc/openldap/group
 
-./usr/share/migrationtools/migrate_group.pl /etc/openldap/group /etc/openldap/config/groups.ldif 
+perl /usr/share/migrationtools/migrate_group.pl /etc/openldap/group /etc/openldap/config/groups.ldif
 
 ldapadd \
 -x \
@@ -252,6 +253,7 @@ firewall-cmd \
 # Reload  the firewall configuration
 firewall-cmd \
 --reload
+
 # Edit the /etc/rsyslog.conf file and add the following line
 ed -s /etc/rsyslog.conf << 'EOF'
 $a
