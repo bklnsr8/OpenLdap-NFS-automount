@@ -29,6 +29,7 @@ Step 2: config file creation
 	- Add the cosine schemas
 	- Add the nis schemas
 - Create the /etc/openldap/changes.ldif file
+	- Create the /etc/openldap/config directory
 	- Send changes.ldif to the slapd servers
 - Create the /etc/openldap/base.ldif file
 	- Build the structure of the directory services
@@ -93,6 +94,7 @@ ldapadd \
 -f /etc/openldap/schema/nis.ldif
 
 # Create the /etc/openldap/changes.ldif file
+mkdir /etc/openldap/config
 touch /etc/openldap/config/changes.ldif 
 ed -s /etc/openldap/config/changes.ldif << 'EOF'
 $a
