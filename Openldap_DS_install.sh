@@ -115,16 +115,6 @@ olcRootPW: {SSHA}l8A+0c+lRcymtWuIFbbc3EJ1PRZz9mGg
 
 dn: cn=config
 changetype: modify
-replace: olcTLSCertificateFile
-olcTLSCertificateFile: /etc/openldap/certs/cert.pem
-
-dn: cn=config
-changetype: modify
-replace: olcTLSCertificateKeyFile
-olcTLSCertificateKeyFile: /etc/openldap/certs/priv.pem
-
-dn: cn=config
-changetype: modify
 replace: olcLogLevel
 olcLogLevel: -1
 
@@ -141,6 +131,26 @@ ldapmodify \
 -Y EXTERNAL \
 -H ldapi:/// \
 -f /etc/openldap/config/changes.ldif
+
+# Create the /etc/opendldap/config/certinfo.ldif
+touch /etc/openldap/config/certinfo.ldif
+ed -s /etc/openldap/config/certinfo.ldif << 'EOF'
+$a
+dn: cn=config
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/openldap/certs/cert.pem
+-
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/openldap/certs/priv.pem
+.
+w
+EOF
+
+#* Send certinfo.ldif to the slapd servers
+ldapmodify \
+-Y EXTERNAL \
+-H ldapi:/// \
+-f /etc/openldap/config/certinfo.ldif
 
 # Create the /etc/openldap/base.ldif file
 touch /etc/openldap/config/base.ldif
