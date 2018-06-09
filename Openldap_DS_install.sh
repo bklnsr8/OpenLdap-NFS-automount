@@ -207,9 +207,9 @@ echo 'redhat' | passwd ldapuser02 --stdin
 
 # edit the /usr/share/migrationtools/migrate_common.ph
 cp 
-sed -i -e 's/$DEFAULT_MAIL_DOMAIN.*$;/$DEFAULT_MAIL_DOMAIN = "bkln.com"/' /usr/share/migrationtools/migrate_common.ph
+sed -i -e 's/\$DEFAULT_MAIL_DOMAIN.*;/\$DEFAULT_MAIL_DOMAIN = "bkln.com";/' /usr/share/migrationtools/migrate_common.ph
 
-sed -i -e 's/$DEFAULT_BASE.*$;/$DEFAULT_BASE = "dc=bkln,dc=com"/' /usr/share/migrationtools/migrate_common.ph
+sed -i -e 's/\$DEFAULT_BASE.*;/\$DEFAULT_BASE = "dc=bkln,dc=com";/' /usr/share/migrationtools/migrate_common.ph
 
 # Create the current users in the directory
 
