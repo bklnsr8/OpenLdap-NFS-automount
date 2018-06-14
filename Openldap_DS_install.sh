@@ -31,6 +31,8 @@ Step 2: config file creation
 - Create the /etc/openldap/changes.ldif file
 	- Create the /etc/openldap/config directory
 	- Send changes.ldif to the slapd servers
+- Create the /etc/openldap/certinfo.ldif file
+	- Send certinfo.ldif to the slapd servers
 - Create the /etc/openldap/base.ldif file
 	- Build the structure of the directory services
 
@@ -266,3 +268,91 @@ EOF
 systemctl \
 restart \
 rsyslog
+
+<< 'END'
+Step 5: NFS Server Configuration\
+- Install the file-server package group
+- Add a new service to the firewall
+  - add nfs service
+  - add mountd service
+  - add rpc-bind service
+  - firewall reload
+- Enable and start daemons
+  - enable and start rpcbind
+  - enable and start nfs-server
+END
+
+# Install the file-server package group
+yum groupinstall -y \
+file-server
+
+# Add a new service to the firewall
+#* add nfs service
+firewall-cmd --permanent --add-service=nfs
+
+#* add mountd service
+firewall-cmd --permanent --add-service=mountd
+
+#* add rpc-bind service
+firewall-cmd --permanent --add-service=rpc-bind
+
+#* firewall reload
+firewall-cmd --reload
+
+# Enable and Start daemons
+#* enable and start rpcbind
+systemctl enable rpcbind && systemctl start rpcbind
+
+#* enable and start nfs-server
+systemctl enable nfs-server && systemctl start nfs-server
+
+<< 'END'
+Step 6: SELinux Configuration
+- Assign the correct SELinux contexts to the new directories:
+  - install setroubleshoot-server
+  - set the fcontext for /home/guests
+  - restore context of /home/guests
+- Assign the correct setting to the SELinux booleans:
+  - set nfs_export_all_rw boolean to on
+  - set nfs_export_all_ro boolean to on
+  - set use_nfs_home_dirs boolean to on
+END
+
+# Assign the correct SELinux contexts to the new directories:
+#* install setroubleshoot-server
+yum install -y \
+setroubleshoot-server
+
+#* set the fcontext for /home/guests
+semanage fcontext -a -t public_content_rw_t "/home/guests(/.*)?"
+
+#* restore context of /home/guests
+restorecon -R /home/guests
+
+# Assign the correct setting to the SELinux booleans:
+#* set nfs_export_all_rw boolean to on
+setsebool -P nfs_export_all_rw on
+
+#* set nfs_export_all_ro boolean to on
+setsebool -P nfs_export_all_ro on
+
+#* set use_nfs_home_dirs boolean to on
+setsebool -P use_nfs_home_dirs on
+
+<< 'END'
+Step 7: NFS configure directories to share
+- Edit the /etc/exports file
+- Export the directories
+- restart nfs-server
+END
+
+# Edit the /etc/exports file
+echo "/home/guests *(rw,no_root_squash)" >> /etc/exports
+
+# Export the directories
+exportfs -avr
+
+# restart nfs-server
+systemctl restart nfs-server 
+
+
